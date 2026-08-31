@@ -1,0 +1,18 @@
+{
+  "name": "pi-iterm2",
+  "version": "0.1.0",
+  "description": "Pi extension for iTerm2: show the latest user request in the tab title and notify on completion.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": ["pi-package", "iterm2", "title", "notification", "macos"],
+  "pi": {
+    "extensions": ["./extensions"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  }
+}
