@@ -20,11 +20,20 @@
  */
 
 import { exec } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const MAX_LEN = 60;
 const notifyEnabled = process.env.PI_ITERM2_NOTIFY !== "0";
+
+const NOTIFY_MSG = "pi 已完成回答";
+const ITERM2_BUNDLE = "com.googlecode.iterm2";
+// 优先使用 terminal-notifier（能显示指定 sender + 系统提示音 + 点击激活），否则回退 osascript
+const TN_CANDIDATES = [
+	"/opt/homebrew/bin/terminal-notifier",
+	"/usr/local/bin/terminal-notifier",
+];
 
 function oneLine(s: string): string {
 	return s.replace(/\s+/g, " ").trim();
@@ -43,14 +52,31 @@ function baseTitle(pi: ExtensionAPI): string {
 	return session ? `π · ${session} · ${cwdName()}` : `π · ${cwdName()}`;
 }
 
-/** 通过 macOS 通知中心弹系统通知（后台方式，不阻塞）。 */
+/** 安全地在后台执行命令（参数经单引号转义）。 */
+function run(bin: string, args: string[]): void {
+	const quoted = args.map((a) => `'${a.replace(/'/g, "'\\''")}'`).join(" ");
+	exec(`"${bin}" ${quoted}`, () => {});
+}
+
+/**
+ * 通过 macOS 通知中心弹系统通知（后台方式，不阻塞）。
+ *  - 装了 terminal-notifier：发送者显示为 iTerm2 + 系统提示音 + 点击激活 iTerm2。
+ *  - 未装则回退 osascript：此时发送者固定为“脚本编辑器”，必须显式 sound name 才有提示音。
+ */
 function notifyCompletion() {
 	if (!notifyEnabled || process.platform !== "darwin") return;
-	const script = [
-		"display notification",
-		`\"pi 已完成回答\"`,
-		"with title \"pi\"",
-	].join(" ");
+	const tn = TN_CANDIDATES.find((p) => existsSync(p));
+	if (tn) {
+		run(tn, [
+			"-title", "pi",
+			"-message", NOTIFY_MSG,
+			"-sender", ITERM2_BUNDLE,
+			"-activate", ITERM2_BUNDLE,
+			"-sound", "default",
+		]);
+		return;
+	}
+	const script = `display notification "${NOTIFY_MSG}" with title "pi" sound name "Glass"`;
 	exec(`osascript -e '${script}'`, () => {});
 }
 
