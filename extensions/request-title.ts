@@ -11,9 +11,13 @@
  *
  * 事件说明:
  *   - session_start:       会话启动/加载/resume/reload 时，从会话读“最开始 user 消息”设置标题。
- *   - before_agent_start:  每次提交请求，把标题设为会话最开始提问（新会话首条时用本次补位）。
- *   - agent_settled:       回答完成（不会再自动继续）时触发，用于发系统通知。
+ *   - agent_settled:       回答完成时发系统通知，并从会话读“最开始 user 消息”校正标题
+ *                          （此时消息已全部落盘，读取最可靠，避免闪现 reload 后的第一条）。
  *   - session_shutdown:    会话退出时把标题还原为基础标题。
+ *
+ * 注意：不在 before_agent_start 里写标题——它触发时当前消息可能尚未落盘，
+ * 若用本次提问补位，会在 reload 后短暂闪现“reload 后的第一条”。因此标题
+ * 一律由 session_start / agent_settled 从会话读“最开始提问”写入。
  *
  * “最开始提问”= 会话文件里第一条 role 为 user 的真实消息，随会话存储，
  * 因此跨 reload / resume 稳定指向同一句，不会因重启或时间漂移。
@@ -117,18 +121,15 @@ function applyTitle(
 export default function (pi: ExtensionAPI) {
 	// 标题显示「本会话最开始的一次提问」（会话里第一条 user 消息）。
 	// 它随会话文件存储，因此跨 reload / resume 稳定指向同一句，不会因重启漂移。
+	// 只依赖 session_start / agent_settled 写标题（此时可确定性读到最早那条），
+	// 刻意不用 before_agent_start，避免 reload 后闪现“reload 后的第一条”。
 
 	// 会话启动/加载/恢复时：显示会话最开始那条提问（若有历史）
 	pi.on("session_start", async (_event, ctx) => {
 		applyTitle(pi, ctx, ctx.sessionManager, "");
 	});
 
-	// 每次提交请求：恒定显示会话最开始提问；新会话首条时 session 尚无历史，用本次补位
-	pi.on("before_agent_start", async (event, ctx) => {
-		applyTitle(pi, ctx, ctx.sessionManager, event.prompt ?? "");
-	});
-
-	// 回答完成：给出系统通知，并兑底校正标题为「会话最开始提问」（此时所有消息已落盘，读取最可靠）
+	// 回答完成：发系统通知，并校正标题为「会话最开始提问」（此时所有消息已落盘，读取最可靠）
 	pi.on("agent_settled", async (_event, ctx) => {
 		notifyCompletion();
 		applyTitle(pi, ctx, ctx.sessionManager, "");

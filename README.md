@@ -52,6 +52,8 @@ pi remove git:github.com/the-ultra-nexus/pi-iterm2   # 卸载（用你安装时�
 
 - 标题恒定显示**本会话最开始的一次提问**（会话里第一条 user 消息）
 - 跨 reload / resume 稳定指向同一句，不会被后续提问或重启漂移
+- 不再用 `before_agent_start` 写标题（避免 reload 后短暂闪现“reload 后的第一条”），
+  标题只在 `session_start` / `agent_settled`（消息已落盘）时写入
 - 退出 pi → 标题还原为基础标题 `π · <会话名> · <目录名>`
 
 请求内容超过 60 字符自动截断并追加 `…`。
