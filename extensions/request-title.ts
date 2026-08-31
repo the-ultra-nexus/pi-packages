@@ -2,18 +2,21 @@
  * pi-iterm2
  *
  * iTerm2 集成扩展：
- *   1. 在终端（tab）标题显示「最新一次 pi 提问」，每次请求实时更新。
+ *   1. 在终端（tab）标题显示「本会话最开始一次提问」（第一次提问），恒定。
  *   2. 回答完成时通过 macOS 系统通知（通知中心）给出提示，可开关。
  *
- * 标题格式: π · <最新提问> · <当前目录名>   (请求超长自动截断)
+ * 标题格式: π · <最开始提问> · <当前目录名>   (请求超长自动截断)
  *
  * 通知开关: 环境变量 PI_ITERM2_NOTIFY=0 可关闭回答完成通知（默认开启）。
  *
  * 事件说明:
- *   - session_start:       会话启动/加载/resume/reload 时，从会话读“最新 user 消息”设置标题。
- *   - before_agent_start:  每次提交请求，把标题更新为本次提问（最新）。
+ *   - session_start:       会话启动/加载/resume/reload 时，从会话读“最开始 user 消息”设置标题。
+ *   - before_agent_start:  每次提交请求，把标题设为会话最开始提问（新会话首条时用本次补位）。
  *   - agent_settled:       回答完成（不会再自动继续）时触发，用于发系统通知。
  *   - session_shutdown:    会话退出时把标题还原为基础标题。
+ *
+ * “最开始提问”= 会话文件里第一条 role 为 user 的真实消息，随会话存储，
+ * 因此跨 reload / resume 稳定指向同一句，不会因重启或时间漂移。
  *
  * 安装方式（作为 pi 包）:
  *   pi install git:github.com/<user>/pi-iterm2
@@ -86,38 +89,49 @@ function extractPrompt(content: unknown): string {
 	return "";
 }
 
-/** 取出会话里“最新”的一条真实用户提问；返回已截断的标题片段。 */
-function latestUserPrompt(
+/** 取出会话里“最开始”的一条真实用户提问（第一条 user 消息）；返回已截断的标题片段。 */
+function earliestUserPrompt(
 	sm: { getEntries(): Array<{ type: string; message?: { role?: string; content?: unknown } }> },
 ): string {
-	let latest = "";
 	for (const entry of sm.getEntries()) {
 		if (entry.type === "message" && entry.message?.role === "user") {
 			const prompt = extractPrompt(entry.message.content);
-			if (prompt) latest = clipped(prompt);
+			if (prompt) return clipped(prompt);
 		}
 	}
-	return latest;
+	return "";
+}
+
+/** 计算并写入标题：优先用会话最开始（第一条）的 user 提问，否则用 fallback（新会话首条）。 */
+function applyTitle(
+	pi: ExtensionAPI,
+	ctx: { ui: { setTitle(t: string): void } },
+	sm: { getEntries(): Array<{ type: string; message?: { role?: string; content?: unknown } }> },
+	fallback: string,
+): void {
+	const earliest = earliestUserPrompt(sm);
+	const prompt = earliest || (fallback ? clipped(oneLine(fallback)) : "");
+	ctx.ui.setTitle(prompt ? `π · ${prompt} · ${cwdName()}` : baseTitle(pi));
 }
 
 export default function (pi: ExtensionAPI) {
-	// 标题显示“最新一次提问”：每次请求实时更新为本次提问；回答完成后标题保持该提问。
+	// 标题显示「本会话最开始的一次提问」（会话里第一条 user 消息）。
+	// 它随会话文件存储，因此跨 reload / resume 稳定指向同一句，不会因重启漂移。
 
-	// 会话启动/加载/恢复时：若已有历史，显示其中“最新”的一条 user 提问
+	// 会话启动/加载/恢复时：显示会话最开始那条提问（若有历史）
 	pi.on("session_start", async (_event, ctx) => {
-		const latest = latestUserPrompt(ctx.sessionManager);
-		ctx.ui.setTitle(latest ? `π · ${latest} · ${cwdName()}` : baseTitle(pi));
+		applyTitle(pi, ctx, ctx.sessionManager, "");
 	});
 
-	// 每次提交请求：直接用本次提问作为最新标题（不依赖 session 写入时序）
+	// 每次提交请求：恒定显示会话最开始提问；新会话首条时 session 尚无历史，用本次补位
 	pi.on("before_agent_start", async (event, ctx) => {
-		const prompt = event.prompt ? clipped(oneLine(event.prompt)) : "";
-		ctx.ui.setTitle(prompt ? `π · ${prompt} · ${cwdName()}` : baseTitle(pi));
+		applyTitle(pi, ctx, ctx.sessionManager, event.prompt ?? "");
 	});
 
-	// 回答完成：给出系统通知（标题保持最新提问）
-	pi.on("agent_settled", async (_event, _ctx) => {
+	// 回答完成：给出系统通知，并兑底校正标题为「会话最开始提问」（此时所有消息已落盘，读取最可靠）
+	pi.on("agent_settled", async (_event, ctx) => {
 		notifyCompletion();
+		applyTitle(pi, ctx, ctx.sessionManager, "");
 	});
 
 	// 会话退出时把标题还原为基础标题
