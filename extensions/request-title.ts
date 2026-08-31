@@ -69,6 +69,13 @@ export default function (pi: ExtensionAPI) {
 	// 记录会话“第一次提问”，此后标题恒定为该次提问（不再被后续请求覆盖）
 	let firstPrompt: string | null = null;
 
+	// 会话启动/加载/reload/新增/resume/fork 时：重置首次标记，并把标题清回基础标题，
+	// 避免 reload 后残留旧会话的第一次提问。之后第一条新请求即为新的“第一次提问”。
+	pi.on("session_start", async (_event, ctx) => {
+		firstPrompt = null;
+		ctx.ui.setTitle(baseTitle(pi));
+	});
+
 	pi.on("before_agent_start", async (event, ctx) => {
 		if (firstPrompt !== null) return; // 已记录过第一次，后续请求不更新标题
 		firstPrompt = event.prompt ? oneLine(event.prompt) : "";
