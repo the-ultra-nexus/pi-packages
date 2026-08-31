@@ -7,7 +7,7 @@
  *       跨 reload / resume 稳定指向同一句；退出时还原为基础标题。
  *
  * 通知: agent_settled（所有消息已落盘，回答真正完成）时，用 iTerm2 原生 OSC
- *       触发系统通知，并以「当前这次提问」作为通知标题；
+ *       触发系统通知，通知标题为 assistant 回复摘要；
  *       PI_ITERM2_NOTIFY=0 可关闭（默认开启）。
  */
 
@@ -83,6 +83,18 @@ function latestUserPrompt(sm: SM): string {
 	return latest;
 }
 
+/** 会话里最后一条 assistant 回复的文本摘要。 */
+function latestAssistantText(sm: SM): string {
+	let latest = "";
+	for (const entry of sm.getEntries()) {
+		if (entry.type === "message" && entry.message?.role === "assistant") {
+			const p = extractPrompt(entry.message.content);
+			if (p) latest = clipped(p);
+		}
+	}
+	return latest;
+}
+
 function applyTitle(pi: ExtensionAPI, ctx: { ui: { setTitle(t: string): void } }, sm: SM): void {
 	const earliest = earliestUserPrompt(sm);
 	ctx.ui.setTitle(earliest ? `π · ${earliest} · ${cwdName()}` : baseTitle(pi));
@@ -90,16 +102,16 @@ function applyTitle(pi: ExtensionAPI, ctx: { ui: { setTitle(t: string): void } }
 
 /**
  * 回答完成时触发 iTerm2 原生系统通知（无需第三方工具）。
- * 以「当前本次提问」作为通知标题。
+ * 以「assistant 回复摘要」作为通知标题。
  *   - OSC 9 : 弹系统通知，发送者即 iTerm2
  *   - OSC 1337 ; RequestAttention=once : dock 图标弹跳一次 + 系统提示音
  * 非 iTerm2 终端或写入失败时回退 osascript（显式加提示音）。
  */
-function notifyCompletion(prompt: string) {
+function notifyCompletion(replyText: string) {
 	if (!notifyEnabled || process.platform !== "darwin") return;
-	const subject = prompt ? clipped(oneLine(prompt)) : "pi";
+	const subject = replyText ? clipped(oneLine(replyText)) : "pi";
 	try {
-		process.stdout.write(`\x1b]9;${subject} — ${NOTIFY_DONE}\x07`);
+		process.stdout.write(`\x1b]9;${subject}\x07`);
 		process.stdout.write("\x1b]1337;RequestAttention=once\x07");
 		return;
 	} catch {
@@ -119,10 +131,10 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	// 回答完成（消息已落盘）：
-	//   1) 通知，标题 = 当前这次提问
+	//   1) 通知，标题 = assistant 回复摘要
 	//   2) 校正标题为「最开始提问」
 	pi.on("agent_settled", async (_event, ctx) => {
-		notifyCompletion(latestUserPrompt(ctx.sessionManager));
+		notifyCompletion(latestAssistantText(ctx.sessionManager));
 		applyTitle(pi, ctx, ctx.sessionManager);
 	});
 

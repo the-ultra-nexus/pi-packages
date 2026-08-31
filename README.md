@@ -6,8 +6,8 @@ Pi 的 iTerm2 集成扩展：把 iTerm2 的标签页标题显示为**会话第�
 
 ## 功能
 
-1. **标题运行动画** — 请求运行时标题显示盲文旋转动画，回答结束还原为基础标题 `π · <会话名> · <目录名>`（逻辑参照 Orca 的 titlebar-spinner）。
-2. **回答完成系统通知** — 每次回答完成后，在 macOS 通知中心弹出一条「pi 已完成回答」。
+1. **标题恒定显示提问** — 标题显示本会话最开始的一次提问，跨 reload / resume 稳定，退出时还原。
+2. **回答完成系统通知** — 每次回答完成后，在 macOS 通知中心弹出通知，标题显示 assistant 回复摘要。
 
 ## 安装
 
@@ -37,7 +37,7 @@ pi remove git:github.com/the-ultra-nexus/pi-iterm2   # 卸载（用你安装时�
 
 | 环境变量 | 默认 | 说明 |
 |----------|------|------|
-| `PI_ITERM2_NOTIFY` | 开 | 设为 `0` 关闭「回答完成系统通知」 |
+| `PI_ITERM2_NOTIFY` | 开 | 设为 `0` 关闭「回答完成通知」 |
 
 ### 通知机制（iTerm2 原生，无需第三方工具）
 
@@ -56,13 +56,13 @@ pi remove git:github.com/the-ultra-nexus/pi-iterm2   # 卸载（用你安装时�
 ## 通知
 
 - 回答完成（`agent_settled`，消息已落盘）时触发 iTerm2 原生通知
-- **通知标题显示当前这次提问**；正文为「pi 已完成回答」
+- **通知标题显示 assistant 回复摘要**（最后一条回复的前 60 字）
 - 发送者为 iTerm2（OSC 9）+ dock 弹跳 + 系统提示音（`RequestAttention=once`）
 
 ## 事件/原理
 
-- `before_agent_start` — 每次用户提交请求触发，`event.prompt` 即请求原文
-- `agent_settled` — 回答完成（不会自动继续）时触发，发系统通知
+- `session_start` — 会话启动/加载/恢复时，设定标题为最开始提问
+- `agent_settled` — 回答完成（消息已落盘）时触发，发系统通知 + 校正标题
 - `session_shutdown` — 会话退出时还原标题
 
 ## License
