@@ -20,7 +20,6 @@
  */
 
 import { exec } from "node:child_process";
-import { existsSync } from "node:fs";
 import path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
@@ -28,12 +27,6 @@ const MAX_LEN = 60;
 const notifyEnabled = process.env.PI_ITERM2_NOTIFY !== "0";
 
 const NOTIFY_MSG = "pi 已完成回答";
-const ITERM2_BUNDLE = "com.googlecode.iterm2";
-// 优先使用 terminal-notifier（能显示指定 sender + 系统提示音 + 点击激活），否则回退 osascript
-const TN_CANDIDATES = [
-	"/opt/homebrew/bin/terminal-notifier",
-	"/usr/local/bin/terminal-notifier",
-];
 
 function oneLine(s: string): string {
 	return s.replace(/\s+/g, " ").trim();
@@ -52,29 +45,21 @@ function baseTitle(pi: ExtensionAPI): string {
 	return session ? `π · ${session} · ${cwdName()}` : `π · ${cwdName()}`;
 }
 
-/** 安全地在后台执行命令（参数经单引号转义）。 */
-function run(bin: string, args: string[]): void {
-	const quoted = args.map((a) => `'${a.replace(/'/g, "'\\''")}'`).join(" ");
-	exec(`"${bin}" ${quoted}`, () => {});
-}
-
 /**
- * 通过 macOS 通知中心弹系统通知（后台方式，不阻塞）。
- *  - 装了 terminal-notifier：发送者显示为 iTerm2 + 系统提示音 + 点击激活 iTerm2。
- *  - 未装则回退 osascript：此时发送者固定为“脚本编辑器”，必须显式 sound name 才有提示音。
+ * 回答完成时触发 iTerm2 原生系统通知（无需第三方工具）：
+ *   - OSC 9 : 弹系统通知，发送者即 iTerm2（不是“脚本编辑器”）
+ *   - OSC 1337 ; RequestAttention=once : dock 图标弹跳一次 + 播放系统提示音
+ * 这两个序列直接写入当前终端；文件同时保留一个 osascript（带提示音）回退，
+ * 以兼容非 iTerm2 终端或写入失败的情况。
  */
 function notifyCompletion() {
 	if (!notifyEnabled || process.platform !== "darwin") return;
-	const tn = TN_CANDIDATES.find((p) => existsSync(p));
-	if (tn) {
-		run(tn, [
-			"-title", "pi",
-			"-message", NOTIFY_MSG,
-			"-sender", ITERM2_BUNDLE,
-			"-activate", ITERM2_BUNDLE,
-			"-sound", "default",
-		]);
+	try {
+		process.stdout.write(`\x1b]9;${NOTIFY_MSG}\x07`);
+		process.stdout.write("\x1b]1337;RequestAttention=once\x07");
 		return;
+	} catch {
+		// 终端不支持该 OSC 时回退到 osascript（显式加提示音）；来源会显示为“脚本编辑器”
 	}
 	const script = `display notification "${NOTIFY_MSG}" with title "pi" sound name "Glass"`;
 	exec(`osascript -e '${script}'`, () => {});

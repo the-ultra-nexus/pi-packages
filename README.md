@@ -27,17 +27,14 @@ pi install /path/to/pi-iterm2
 |----------|------|------|
 | `PI_ITERM2_NOTIFY` | 开 | 设为 `0` 关闭「回答完成系统通知」 |
 
-### 通知的发送者与声音
+### 通知机制（iTerm2 原生，无需第三方工具）
 
-系统通知默认通过 `osascript` 发送，有两个已知限制：**发送者固定显示为「脚本编辑器」**、且**默认静音**。
+回答完成时，扩展直接向 iTerm2 发送两条**原生转义序列**来触发通知，发送者即 iTerm2：
 
-要显示为指定应用并带系统提示音，推荐安装 [terminal-notifier](https://github.com/julienXX/terminal-notifier)：
+- `OSC 9 ; <消息>` → 弹系统通知
+- `OSC 1337 ; RequestAttention=once` → dock 图标弹跳一次 + 系统提示音
 
-```bash
-brew install terminal-notifier
-```
-
-安装后本扩展会自动检测并改用 terminal-notifier：通知显示为 **iTerm2** 应用、播放系统默认提示音、点击可激活 iTerm2。未安装时自动回退 osascript（并显式加提示音）。
+无需安装 terminal-notifier 或 osascript。仅当不在 iTerm2 终端（如 tmux）时，才回退到 osascript 方式（并用显式提示音）。
 
 ## 标题行为
 
