@@ -2,10 +2,10 @@
  * pi-iterm2
  *
  * iTerm2 集成扩展：
- *   1. 把终端（tab）标题实时显示为「最近一次 pi 请求」，常驻保留直到下一条。
+ *   1. 把终端（tab）标题显示为「本会话第一次 pi 提问」，恒定为首次提问。
  *   2. 回答完成时通过 macOS 系统通知（通知中心）给出提示，可开关。
  *
- * 标题格式: π · <最近一次请求> · <当前目录名>   (请求超长自动截断)
+ * 标题格式: π · <第一次提问> · <当前目录名>   (请求超长自动截断)
  *
  * 通知开关: 环境变量 PI_ITERM2_NOTIFY=0 可关闭回答完成通知（默认开启）。
  *
@@ -66,10 +66,13 @@ function notifyCompletion() {
 }
 
 export default function (pi: ExtensionAPI) {
-	// 每次用户提交请求：把标题更新为请求内容，并常驻保留
+	// 记录会话“第一次提问”，此后标题恒定为该次提问（不再被后续请求覆盖）
+	let firstPrompt: string | null = null;
+
 	pi.on("before_agent_start", async (event, ctx) => {
-		const prompt = event.prompt ? oneLine(event.prompt) : "";
-		ctx.ui.setTitle(prompt ? `π · ${clipped(prompt)} · ${cwdName()}` : baseTitle(pi));
+		if (firstPrompt !== null) return; // 已记录过第一次，后续请求不更新标题
+		firstPrompt = event.prompt ? oneLine(event.prompt) : "";
+		ctx.ui.setTitle(firstPrompt ? `π · ${clipped(firstPrompt)} · ${cwdName()}` : baseTitle(pi));
 	});
 
 	// 回答完成：给出系统通知（标题本身保留最近一条请求，不还原）
