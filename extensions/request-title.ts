@@ -108,7 +108,7 @@ function applyTitle(pi: ExtensionAPI, ctx: { ui: { setTitle(t: string): void } }
  * 非 iTerm2 终端或写入失败时回退 osascript（显式加提示音）。
  */
 function notifyCompletion(replyText: string) {
-	if (!notifyEnabled || process.platform !== "darwin" || process.env.TERM_PROGRAM !== "iTerm.app") return;
+	if (!notifyEnabled || process.platform !== "darwin" || process.env.PI_WEB_HOSTNAME) return;
 	const subject = replyText ? clipped(oneLine(replyText)) : "pi";
 	try {
 		process.stdout.write(`\x1b]9;${subject}\x07`);
