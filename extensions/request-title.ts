@@ -1,48 +1,35 @@
 /**
  * pi-iterm2
  *
- * iTerm2 集成扩展：
- *   1. 在终端（tab）标题显示「本会话最开始一次提问」（第一次提问），恒定。
- *   2. 回答完成时通过 macOS 系统通知（通知中心）给出提示，可开关。
+ * iTerm2 集成扩展。标题与动画逻辑参照 Orca 的 titlebar-spinner，
+ * 通知逻辑参照 Orca 的 agent_settled 时机，但发送端为 iTerm2 原生。
  *
- * 标题格式: π · <最开始提问> · <当前目录名>   (请求超长自动截断)
+ * 标题: agent 运行中用旋转动画（盲文帧），回答结束还原为基础标题：
+ *       π · <会话名> · <目录名>
  *
- * 通知开关: 环境变量 PI_ITERM2_NOTIFY=0 可关闭回答完成通知（默认开启）。
- *
- * 事件说明:
- *   - session_start:       会话启动/加载/resume/reload 时，从会话读“最开始 user 消息”设置标题。
- *   - agent_settled:       回答完成时发系统通知，并从会话读“最开始 user 消息”校正标题
- *                          （此时消息已全部落盘，读取最可靠，避免闪现 reload 后的第一条）。
- *   - session_shutdown:    会话退出时把标题还原为基础标题。
- *
- * 注意：不在 before_agent_start 里写标题——它触发时当前消息可能尚未落盘，
- * 若用本次提问补位，会在 reload 后短暂闪现“reload 后的第一条”。因此标题
- * 一律由 session_start / agent_settled 从会话读“最开始提问”写入。
- *
- * “最开始提问”= 会话文件里第一条 role 为 user 的真实消息，随会话存储，
- * 因此跨 reload / resume 稳定指向同一句，不会因重启或时间漂移。
- *
- * 安装方式（作为 pi 包）:
- *   pi install git:github.com/<user>/pi-iterm2
- *   或本地: pi install /path/to/pi-iterm2
+ * 通知: agent_settled（所有消息已落盘，回答真正完成）时，用 iTerm2 原生 OSC
+ *       触发系统通知；PI_ITERM2_NOTIFY=0 可关闭（默认开启）。
  */
 
 import { exec } from "node:child_process";
 import path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const MAX_LEN = 60;
+const BRAILLE_FRAMES = [
+	"\u280b",
+	"\u2819",
+	"\u2839",
+	"\u2838",
+	"\u283c",
+	"\u2834",
+	"\u2826",
+	"\u2827",
+	"\u2807",
+	"\u280f",
+];
+
 const notifyEnabled = process.env.PI_ITERM2_NOTIFY !== "0";
-
 const NOTIFY_MSG = "pi 已完成回答";
-
-function oneLine(s: string): string {
-	return s.replace(/\s+/g, " ").trim();
-}
-
-function clipped(s: string): string {
-	return s.length > MAX_LEN ? s.slice(0, MAX_LEN) + "…" : s;
-}
 
 function cwdName(): string {
 	return path.basename(process.cwd()) || process.cwd();
@@ -55,10 +42,9 @@ function baseTitle(pi: ExtensionAPI): string {
 
 /**
  * 回答完成时触发 iTerm2 原生系统通知（无需第三方工具）：
- *   - OSC 9 : 弹系统通知，发送者即 iTerm2（不是“脚本编辑器”）
- *   - OSC 1337 ; RequestAttention=once : dock 图标弹跳一次 + 播放系统提示音
- * 这两个序列直接写入当前终端；文件同时保留一个 osascript（带提示音）回退，
- * 以兼容非 iTerm2 终端或写入失败的情况。
+ *   - OSC 9 : 弹系统通知，发送者即 iTerm2
+ *   - OSC 1337 ; RequestAttention=once : dock 图标弹跳一次 + 系统提示音
+ * 直接写入当前终端；非 iTerm2 终端或写入失败时回退 osascript（显式加提示音）。
  */
 function notifyCompletion() {
 	if (!notifyEnabled || process.platform !== "darwin") return;
@@ -67,76 +53,61 @@ function notifyCompletion() {
 		process.stdout.write("\x1b]1337;RequestAttention=once\x07");
 		return;
 	} catch {
-		// 终端不支持该 OSC 时回退到 osascript（显式加提示音）；来源会显示为“脚本编辑器”
+		// 终端不支持该 OSC 时回退到 osascript（来源会显示为“脚本编辑器”）
 	}
 	const script = `display notification "${NOTIFY_MSG}" with title "pi" sound name "Glass"`;
 	exec(`osascript -e '${script}'`, () => {});
 }
 
-/** 从一条 message 的 content 中提取纯文本（content 可以是字符串或文本块数组）。 */
-function extractPrompt(content: unknown): string {
-	if (typeof content === "string") return oneLine(content);
-	if (Array.isArray(content)) {
-		return oneLine(
-			content
-				.filter(
-					(c): c is { type: "text"; text: string } =>
-						typeof c === "object" &&
-						c !== null &&
-						(c as { type?: string }).type === "text" &&
-						typeof (c as { text?: unknown }).text === "string",
-				)
-				.map((c) => c.text)
-				.join(" "),
-		);
-	}
-	return "";
+interface UITitle {
+	setTitle(t: string): void;
 }
-
-/** 取出会话里“最开始”的一条真实用户提问（第一条 user 消息）；返回已截断的标题片段。 */
-function earliestUserPrompt(
-	sm: { getEntries(): Array<{ type: string; message?: { role?: string; content?: unknown } }> },
-): string {
-	for (const entry of sm.getEntries()) {
-		if (entry.type === "message" && entry.message?.role === "user") {
-			const prompt = extractPrompt(entry.message.content);
-			if (prompt) return clipped(prompt);
-		}
-	}
-	return "";
-}
-
-/** 计算并写入标题：优先用会话最开始（第一条）的 user 提问，否则用 fallback（新会话首条）。 */
-function applyTitle(
-	pi: ExtensionAPI,
-	ctx: { ui: { setTitle(t: string): void } },
-	sm: { getEntries(): Array<{ type: string; message?: { role?: string; content?: unknown } }> },
-	fallback: string,
-): void {
-	const earliest = earliestUserPrompt(sm);
-	const prompt = earliest || (fallback ? clipped(oneLine(fallback)) : "");
-	ctx.ui.setTitle(prompt ? `π · ${prompt} · ${cwdName()}` : baseTitle(pi));
+interface HandlersCtx {
+	ui: UITitle;
 }
 
 export default function (pi: ExtensionAPI) {
-	// 标题显示「本会话最开始的一次提问」（会话里第一条 user 消息）。
-	// 它随会话文件存储，因此跨 reload / resume 稳定指向同一句，不会因重启漂移。
-	// 只依赖 session_start / agent_settled 写标题（此时可确定性读到最早那条），
-	// 刻意不用 before_agent_start，避免 reload 后闪现“reload 后的第一条”。
+	let timer: ReturnType<typeof setInterval> | null = null;
+	let frameIndex = 0;
 
-	// 会话启动/加载/恢复时：显示会话最开始那条提问（若有历史）
-	pi.on("session_start", async (_event, ctx) => {
-		applyTitle(pi, ctx, ctx.sessionManager, "");
-	});
-
-	// 回答完成：发系统通知，并校正标题为「会话最开始提问」（此时所有消息已落盘，读取最可靠）
-	pi.on("agent_settled", async (_event, ctx) => {
-		notifyCompletion();
-		applyTitle(pi, ctx, ctx.sessionManager, "");
-	});
-
-	// 会话退出时把标题还原为基础标题
-	pi.on("session_shutdown", async (_event, ctx) => {
+	function stopAnimation(ctx: HandlersCtx) {
+		if (timer) {
+			clearInterval(timer);
+			timer = null;
+		}
+		frameIndex = 0;
 		ctx.ui.setTitle(baseTitle(pi));
+	}
+
+	function startAnimation(ctx: HandlersCtx) {
+		stopAnimation(ctx); // 复位旧 timer 并先写一次基础标题
+		timer = setInterval(() => {
+			const frame = BRAILLE_FRAMES[frameIndex % BRAILLE_FRAMES.length];
+			const session = pi.getSessionName();
+			ctx.ui.setTitle(
+				session ? `${frame} π · ${session} · ${cwdName()}` : `${frame} π · ${cwdName()}`,
+			);
+			frameIndex++;
+		}, 80);
+	}
+
+	// 每次请求开始 → 启动标题动画
+	pi.on("agent_start", async (_event, ctx) => {
+		startAnimation(ctx);
+	});
+
+	// 每次回答结束 → 停止动画，还原基础标题
+	pi.on("agent_end", async (_event, ctx) => {
+		stopAnimation(ctx);
+	});
+
+	// 回答完成（消息已落盘）→ 发 iTerm2 通知
+	pi.on("agent_settled", async (_event, _ctx) => {
+		notifyCompletion();
+	});
+
+	// 会话退出 → 还原基础标题
+	pi.on("session_shutdown", async (_event, ctx) => {
+		stopAnimation(ctx);
 	});
 }
