@@ -20,34 +20,20 @@
 ```
 multi-research/
 ├── SKILL.md        # 主流程：解析模型名单 → 并行调研 → oracle 评审 → 合并落盘
-├── README.md       # 本文件
-└── install.sh      # 一键安装（只需复制技能目录）
+└── README.md       # 本文件
 ```
 
 ## 安装
 
 本技能依赖 pi-subagents（内置 `researcher` / `oracle`、并行调度 `workflowScript`），**无需安装任何自定义 agents**。
 
-### 方式一：npx skills
-
 ```bash
-npx skills add the-ultra-nexus/pi-packages/skills/multi-research --copy
-```
-
-注意：CLI 默认装到它自己支持的 agent 目录（如 `~/.claude/skills/`），**pi 不在其明确支持列表**，装完把 SKILL.md 放到 pi 技能目录：
-
-```bash
-cp <npx 安装目录>/SKILL.md ~/.pi/agent/skills/multi-research/SKILL.md
-```
-
-### 方式二：一键脚本
-
-```bash
+# 直接复制技能目录到 pi 技能路径即可（或使用 npx skills 抓取 SKILL.md 后同样放置）
 git clone https://github.com/the-ultra-nexus/pi-packages.git /tmp/pi-packages
-bash /tmp/pi-packages/skills/multi-research/install.sh
+cp -r /tmp/pi-packages/skills/multi-research ~/.pi/agent/skills/
 ```
 
-`install.sh` 只做一件事：把技能目录复制到 `~/.pi/agent/skills/multi-research/`。幂等可重复执行；可用 `PI_AGENT_DIR` 环境变量改安装位置。
+若用 `npx skills add the-ultra-nexus/pi-packages/skills/multi-research --copy`：CLI 只负责 SKILL.md 且默认装到它自己支持的 agent 目录（pi 不在明确支持列表），装完把 SKILL.md 放到 `~/.pi/agent/skills/multi-research/SKILL.md` 即可。
 
 ## 使用
 
