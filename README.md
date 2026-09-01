@@ -9,6 +9,7 @@
 | `skills/`         | 技能（skills）             | 可复用的代理技能，每个技能一个子目录   |
 | `extensions/`     | 扩展（extensions）         | pi 扩展与自定义工具（规划中，暂为空）  |
 | `skills/grill-all` | 技能：grill-all            | 以一轮轮提问不断拷问、压力测试思考     |
+| `skills/multi-research` | 技能：multi-research | 多模型对照调研：并行不同模型调研同一问题，oracle 交叉检验后合并分析 |
 
 ## 快速开始
 
