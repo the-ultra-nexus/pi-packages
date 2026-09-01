@@ -44,23 +44,19 @@ npx skills add the-ultra-nexus/pi-packages/skills/multi-research --copy
 - 用 `--copy`（而不是默认 symlink），避免跨目录/容器后链接失效。
 
 ```bash
-# ② 研究角色 → pi-subagents 用户级 agents 目录（npx 不负责）
+# ② 研究角色+技能本体落位 pi（npx 不负责 agents）
 git clone https://github.com/the-ultra-nexus/pi-packages.git /tmp/pi-packages
-mkdir -p ~/.pi/agent/agents
-cp /tmp/pi-packages/skills/multi-research/agents/*.md ~/.pi/agent/agents/
+bash /tmp/pi-packages/skills/multi-research/install.sh
 ```
 
-### 方式二：手动复制（免 npx）
+### 方式二：一键脚本（免 npx，推荐）
 
 ```bash
-# ① 技能本体 → 全局技能目录
-mkdir -p ~/.pi/agent/skills
-cp -r multi-research ~/.pi/agent/skills/
-
-# ② 研究角色 → pi-subagents 用户级 agents 目录
-mkdir -p ~/.pi/agent/agents
-cp multi-research/agents/*.md ~/.pi/agent/agents/
+git clone https://github.com/the-ultra-nexus/pi-packages.git /tmp/pi-packages
+bash /tmp/pi-packages/skills/multi-research/install.sh
 ```
+
+`install.sh` 一步完成两件事：技能目录 → `~/.pi/agent/skills/multi-research/`，研究角色 → `~/.pi/agent/agents/`（pi-subagents 的注册位置，`skills/.../agents/` 里的文件只是随包源文件，不注册就不生效）。脚本幂等可重复执行；可用 `PI_AGENT_DIR` 环境变量改安装位置。
 
 两种方式安装后，本 skill 首次运行会自动做角色自检（`subagent action:list` 应能看到 `researcher-glm` / `researcher-qwen` / `researcher-mimo`），缺失会提示。
 
