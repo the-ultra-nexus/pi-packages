@@ -26,9 +26,31 @@ multi-research/
 
 ## 安装
 
-1. 本技能依赖 pi-subagents（内置 `oracle`、并行调度 `workflowScript`）。
+本技能依赖 pi-subagents（内置 `oracle`、并行调度 `workflowScript`）。
 
-2. 分两部分安装：
+### 方式一：npx skills（推荐分发路径）
+
+仓库已发布在 GitHub：`the-ultra-nexus/pi-packages`。
+
+```bash
+# ① 安装 SKILL.md 本体（从 GitHub 抓取）
+npx skills add the-ultra-nexus/pi-packages/skills/multi-research --copy
+#   等价写法：npx skills add https://github.com/the-ultra-nexus/pi-packages/tree/main/skills/multi-research --copy
+```
+
+注意：
+- `npx skills` 只保证安装 `SKILL.md`，**不负责 agents 文件**，以下 ② 必须手动执行；
+- 该 CLI 默认装到它自己支持的 agent 目录（如 `~/.claude/skills/`），**pi 不在其明确支持列表**，装完后请把 SKILL.md 放到 pi 的技能目录：`cp <npx 安装目录>/SKILL.md ~/.pi/agent/skills/multi-research/SKILL.md`；
+- 用 `--copy`（而不是默认 symlink），避免跨目录/容器后链接失效。
+
+```bash
+# ② 研究角色 → pi-subagents 用户级 agents 目录（npx 不负责）
+git clone https://github.com/the-ultra-nexus/pi-packages.git /tmp/pi-packages
+mkdir -p ~/.pi/agent/agents
+cp /tmp/pi-packages/skills/multi-research/agents/*.md ~/.pi/agent/agents/
+```
+
+### 方式二：手动复制（免 npx）
 
 ```bash
 # ① 技能本体 → 全局技能目录
@@ -40,7 +62,7 @@ mkdir -p ~/.pi/agent/agents
 cp multi-research/agents/*.md ~/.pi/agent/agents/
 ```
 
-3. 将来若通过 `npx skills` 安装：CLI 只负责 `SKILL.md` 本体（`npx skills add <owner>/pi-packages` 后选择 multi-research），**agents 仍需手动同步**（上述②三步）。本 skill 首次运行会自动做角色自检并提示缺失。
+两种方式安装后，本 skill 首次运行会自动做角色自检（`subagent action:list` 应能看到 `researcher-glm` / `researcher-qwen` / `researcher-mimo`），缺失会提示。
 
 ## 使用
 
