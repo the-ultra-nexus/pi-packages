@@ -5,6 +5,7 @@ Choose the minimal template for the main route. Lead with conclusions; don't rep
 ## Engineering: locked design
 
 - **Verdict**: proceed, change direction, verify first, or stop
+- **调研摘要** (same-type landscape · benchmarks · best practices, confirmed with the user):
 - **Goal and user**:
 - **Scope and non-goals**:
 - **Chosen design and why**:
@@ -17,6 +18,7 @@ Choose the minimal template for the main route. Lead with conclusions; don't rep
 ## Research: research-question map
 
 - **Verdict**: worth pursuing, needs narrowing, gather evidence first, or not yet
+- **调研摘要** (related work / prior-art landscape):
 - **Research question**:
 - **Expected contribution**:
 - **Core concepts and mechanism**:
@@ -29,6 +31,7 @@ Choose the minimal template for the main route. Lead with conclusions; don't rep
 ## Decision: decision memo
 
 - **Verdict and recommended choice**:
+- **调研摘要** (comparable landscape, confirmed with the user):
 - **Goal and value ordering**:
 - **Options and opportunity cost**:
 - **Key facts and uncertainties**:

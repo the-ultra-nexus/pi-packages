@@ -23,6 +23,10 @@ Read only what applies; otherwise run the main route alone.
 - Engineering decisions that are hard to reverse, confusing without context, and carry real tradeoffs → also read [`references/adr-docs.md`](references/adr-docs.md)
 - The user asks for a review, or the locked result is high-cost, hard-to-reverse, or high-risk → after converging, read [`references/review-loop.md`](references/review-loop.md)
 
+## Research first
+
+For the **engineering**, **research**, and **decision** routes, run a research phase *before* the first grilling round: broaden the fact base — especially the landscape of **same-type products** — and present a **调研摘要** for the user to confirm. Read [`references/research-first.md`](references/research-first.md). The **thinking** route skips this.
+
 ## Work the tree in rounds
 
 The **frontier** — every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier, but in one round put **2–4 mutually independent questions** (default 3), numbered, each with your recommended answer. Then wait for the user's answers before the next round. A question whose answer depends on another still open in this round belongs to a later round, not this one.
@@ -39,7 +43,7 @@ Allow the user to skip a question, answer "not sure", or correct only the recomm
 
 Shift batch size with the answers: stable, complete answers → up to 4; vague, contradictory, or burdened → 1–2. An explicit user batch size wins, capped at 5. Flag equivocation, empty goals, untestable claims, or ignored costs as you hit them, and push on the most critical one first rather than all of them.
 
-**Finding _facts_ is your job, never the user's.** When a frontier question needs a fact from the environment (filesystem, tools, etc.), dispatch a sub-agent to find it; don't ask for anything you could look up. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
+**Finding _facts_ is your job, never the user's.** The research-first phase above front-loads this: by the first round, the same-type landscape should already be a settled fact base, so grilling probes decisions, not lookups. Still, when a frontier question needs a fact from the environment (filesystem, tools, etc.) that the research phase didn't cover, dispatch a sub-agent to find it; don't ask for anything you could look up. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
 
 Priority is not mechanical order: ask what changes direction, rules out an option, or exposes a fatal risk first. Low-impact details take a reasonable default, recorded explicitly, and don't stretch the session. The route files only reorder when their own higher-risk branch says so.
 
