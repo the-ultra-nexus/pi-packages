@@ -37,11 +37,19 @@ Assemble a tight **调研摘要** and show it before grilling:
 - Gaps, risks, or angles this landscape opens that are worth grilling on.
 
 Get the user's confirmation or correction (is the landscape right? missing
-players? wrong emphasis?) **before** starting the grilling rounds. Treat the
-confirmed summary as the settled fact base; inject its facts into the frontier
-questions instead of re-asking them.
+players? wrong emphasis?) through the grilling answers, **not** in a separate
+exchange: same message carries the 调研摘要 *and* the round's 2–4 questions.
+Treat the confirmed summary as the settled fact base; inject its facts into the
+frontier questions instead of re-asking them.
+
+**Handoff is mandatory, not advisory.** Research is never an end state. The
+moment you have a summary, you must move into the first grilling round *in the
+same message*: show the 调研摘要, then immediately the round's 2–4 questions.
+A message that shows research output but asks zero grilling questions is a bug —
+unless the user explicitly asked for research output only.
 
 ## Output
 
 Capture the confirmed 调研摘要 in the locked result (see output-templates) so the
-decision is traceable to the landscape it was made against.
+decision is traceable to the landscape it was made against. It counts as
+confirmed only once the user has answered grilling questions that refer to it.

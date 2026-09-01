@@ -27,6 +27,8 @@ Read only what applies; otherwise run the main route alone.
 
 For the **engineering**, **research**, and **decision** routes, run a research phase *before* the first grilling round: broaden the fact base — especially the landscape of **same-type products** — and present a **调研摘要** for the user to confirm. Read [`references/research-first.md`](references/research-first.md). The **thinking** route skips this.
 
+**Research never ends a session by itself.** It exists only to feed the grilling rounds. After the research phase completes, you must continue into the first grilling round *in the same message*: present the 调研摘要, then immediately ask the round's 2–4 questions together. A message that delivers a summary but asks zero grilling questions is a bug — unless the user explicitly asked for research output only. The user confirms or corrects the summary *inside* their answers rather than in a separate exchange.
+
 ## Work the tree in rounds
 
 The **frontier** — every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier, but in one round put **2–4 mutually independent questions** (default 3), numbered, each with your recommended answer. Then wait for the user's answers before the next round. A question whose answer depends on another still open in this round belongs to a later round, not this one.
