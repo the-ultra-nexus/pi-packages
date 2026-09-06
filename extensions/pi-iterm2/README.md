@@ -2,7 +2,7 @@
 
 Pi 的 iTerm2 集成扩展：把 iTerm2 的标签页标题显示为**会话第一次 pi 提问**，并在**回答完成时弹 macOS 系统通知**（使用 iTerm2 原生转义序列，无需第三方工具）。
 
-- **仓库**: https://github.com/the-ultra-nexus/pi-iterm2
+- **所属合集**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（本扩展归档于 `extensions/pi-iterm2/`）
 
 ## 功能
 
@@ -14,17 +14,14 @@ Pi 的 iTerm2 集成扩展：把 iTerm2 的标签页标题显示为**会话第�
 
 ## 安装
 
-作为 pi 包安装：
+作为 pi 包安装（本扩展已并入 [pi-packages](https://github.com/the-ultra-nexus/pi-packages) 合集，独立仓库已归档）：
 
 ```bash
-# 从 GitHub 安装（推荐）
-pi install git:github.com/the-ultra-nexus/pi-iterm2
+# 本地路径安装（推荐，从合集安装）
+pi install ***REMOVED***pi-packages/extensions/pi-iterm2
 
 # 仅临时试用，不写入配置
-pi -e git:github.com/the-ultra-nexus/pi-iterm2
-
-# 本地路径安装（开发调试）
-pi install ***REMOVED***pi-iterm2
+pi -e ***REMOVED***pi-packages/extensions/pi-iterm2
 ```
 
 安装后**重启 pi，或在 pi 内执行 `/reload`** 即可生效。
@@ -33,7 +30,7 @@ pi install ***REMOVED***pi-iterm2
 
 ```bash
 pi list                                            # 查看已安装的包
-pi remove git:github.com/the-ultra-nexus/pi-iterm2   # 卸载（用你安装时的 source）
+pi remove <安装时使用的 source>                      # 卸载（用你安装时的 source）
 ```
 
 ## 配置
