@@ -1,15 +1,29 @@
 {
   "name": "pi-grill-all",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pi skill: grill the user relentlessly about a plan, decision, idea, research question, or claim — a round of 2-4 independent questions at a time, routed across engineering, research, decisions, and thinking.",
   "license": "MIT",
-  "keywords": ["pi-package", "pi-skill", "grill", "questioning", "planning", "stress-test"],
-  "files": ["SKILL.md", "README.md", "agents", "references"],
+  "keywords": [
+    "pi-package",
+    "pi-skill",
+    "grill",
+    "questioning",
+    "planning",
+    "stress-test"
+  ],
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "agents",
+    "references"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/the-ultra-nexus/pi-packages.git"
   },
   "pi": {
-    "skills": ["./"]
+    "skills": [
+      "./"
+    ]
   }
 }
