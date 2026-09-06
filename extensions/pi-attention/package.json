@@ -1,10 +1,10 @@
 {
   "name": "pi-attention",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Pi extension for iTerm2/Orca attention: title shows the first user request, notify on completion, and alert when pi is waiting for your selection (permission dialogs, plan-mode menus).",
   "type": "module",
   "license": "MIT",
-  "keywords": ["pi-package", "iterm2", "orca", "title", "notification", "macos"],
+  "keywords": ["pi-package", "iterm2", "orca", "attention", "title", "notification", "macos"],
   "pi": {
     "extensions": ["./extensions"]
   },
