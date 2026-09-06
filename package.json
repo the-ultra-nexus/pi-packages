@@ -1,0 +1,12 @@
+{
+  "name": "pi-packages",
+  "version": "1.0.0",
+  "private": true,
+  "description": "pi 编码代理的包与资源合集：扩展随合集一键安装，技能独立分发。",
+  "type": "module",
+  "license": "MIT",
+  "keywords": ["pi-package", "extensions", "skills"],
+  "pi": {
+    "extensions": ["./extensions/pi-attention/extensions"]
+  }
+}

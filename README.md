@@ -14,12 +14,14 @@
 
 ## 快速开始
 
+- 安装扩展合集：`pi install git:github.com/the-ultra-nexus/pi-packages`（合集根 `package.json` 的 `pi.extensions` 已注册全部扩展）
 - 使用某个技能：把对应的技能目录（如 `skills/grill-all/`）放到 pi 的技能搜索路径下，或在代理配置里引用，详见各子目录的 README。
-- 安装某个扩展：`pi install git:github.com/the-ultra-nexus/pi-attention`（各扩展从镜像仓库分发，详见各子目录的 README）
 - 添加新资源：在对应类型目录下新建子文件夹，目录内必须有 `README.md` 说明这是什么、怎么用。
 
 ## 约定
 
-- 本项目是 **pi 资源合集**，不是某个单一技能的仓库；每个子项目保持独立、可单独分发。
+- 本项目是 **pi 资源合集**，不是某个单一技能/扩展的仓库；每个子项目保持独立、可单独分发。
+- 扩展随合集安装：在合集根 `package.json` 的 `pi.extensions` 数组注册，`pi install git:github.com/the-ultra-nexus/pi-packages` 一键加载；新增扩展时同步注册。
+- 技能独立分发：复制目录或用 `npx skills add` 安装，不走 `pi install`。
 - 每个文件夹（无论类型还是具体资源）都带自己的 `README.md`，介绍用途、结构与用法。
 - 资源内部使用相对路径互相引用，移动整个子目录不影响其可用性。
