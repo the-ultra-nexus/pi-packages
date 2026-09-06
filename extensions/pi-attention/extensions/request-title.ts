@@ -1,5 +1,5 @@
 /**
- * pi-iterm2
+ * pi-attention
  *
  * iTerm2 集成扩展。
  *
@@ -8,14 +8,14 @@
  *
  * 通知: agent_settled（所有消息已落盘，回答真正完成）时，用 iTerm2 原生 OSC
  *       触发系统通知，通知标题为 assistant 回复摘要；
- *       PI_ITERM2_NOTIFY=0 可关闭（默认开启）。
+ *       PI_ATTENTION_NOTIFY=0 可关闭（默认开启）。
  */
 
 import { exec } from "node:child_process";
 import path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const notifyEnabled = process.env.PI_ITERM2_NOTIFY !== "0";
+const notifyEnabled = process.env.PI_ATTENTION_NOTIFY !== "0";
 const NOTIFY_DONE = "pi 已完成回答";
 
 function oneLine(s: string): string {

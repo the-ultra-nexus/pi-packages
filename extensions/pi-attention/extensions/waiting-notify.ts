@@ -1,5 +1,5 @@
 /**
- * pi-iterm2 · waiting-notify
+ * pi-attention · waiting-notify
  *
  * 监听 pi 的「等待用户输入」生命周期事件（ui_prompt_start / ui_prompt_end）。
  * 这些事件在所有阻塞式用户界面提示弹出时发出：
@@ -19,15 +19,15 @@
  * 为什么放在这里维护：Orca 会定期覆盖它自己分发的扩展
  * （orca-agent-status.ts、orca-titlebar-spinner.ts 等，文件头标
  * `@orca-managed-pi-extension`），在那些文件上补丁会被冲掉。本扩展随
- * pi-iterm2 包分发，由自己的仓库统一维护。
+ * pi-attention 包分发，由自己的仓库统一维护。
  */
 
 import { exec } from "node:child_process";
 import fs from "node:fs";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-// ⏸ 开关：PI_ITERM2_NOTIFY_WAITING=0 关闭「等待用户输入」的系统通知（默认开）
-const waitingNotify = process.env.PI_ITERM2_NOTIFY_WAITING !== "0";
+// ⏸ 开关：PI_ATTENTION_NOTIFY_WAITING=0 关闭「等待用户输入」的系统通知（默认开）
+const waitingNotify = process.env.PI_ATTENTION_NOTIFY_WAITING !== "0";
 
 // 标题最长显示宽度（macOS 通知标题过长会被截断）
 const SUBJECT_MAX = 60;

@@ -1,8 +1,8 @@
-# pi-iterm2 🍎
+# pi-attention 🍎
 
-Pi 的 iTerm2 集成扩展：把 iTerm2 的标签页标题显示为**会话第一次 pi 提问**，并在**回答完成时弹 macOS 系统通知**（使用 iTerm2 原生转义序列，无需第三方工具）。
+Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显示为**会话第一次 pi 提问**，**回答完成时弹 macOS 系统通知**，并在 **pi 等待你选择时提醒**（权限弹窗 / 计划菜单；iTerm2 原生转义序列与 Orca agent-hook，无需第三方工具）。
 
-- **所属合集**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（本扩展归档于 `extensions/pi-iterm2/`）
+- **所属合集**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（本扩展归档于 `extensions/pi-attention/`）
 
 ## 功能
 
@@ -18,10 +18,10 @@ Pi 的 iTerm2 集成扩展：把 iTerm2 的标签页标题显示为**会话第�
 
 ```bash
 # 本地路径安装（推荐，从合集安装）
-pi install ***REMOVED***pi-packages/extensions/pi-iterm2
+pi install ***REMOVED***pi-packages/extensions/pi-attention
 
 # 仅临时试用，不写入配置
-pi -e ***REMOVED***pi-packages/extensions/pi-iterm2
+pi -e ***REMOVED***pi-packages/extensions/pi-attention
 ```
 
 安装后**重启 pi，或在 pi 内执行 `/reload`** 即可生效。
@@ -37,8 +37,8 @@ pi remove <安装时使用的 source>                      # 卸载（用你安�
 
 | 环境变量 | 默认 | 说明 |
 |----------|------|------|
-| `PI_ITERM2_NOTIFY` | 开 | 设为 `0` 关闭「回答完成通知」 |
-| `PI_ITERM2_NOTIFY_WAITING` | 开 | 设为 `0` 关闭「等待用户操作」的系统通知 |
+| `PI_ATTENTION_NOTIFY` | 开 | 设为 `0` 关闭「回答完成通知」 |
+| `PI_ATTENTION_NOTIFY_WAITING` | 开 | 设为 `0` 关闭「等待用户操作」的系统通知 |
 
 ### 通知机制（iTerm2 原生，无需第三方工具）
 
