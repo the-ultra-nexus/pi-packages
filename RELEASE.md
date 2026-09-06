@@ -51,3 +51,20 @@ npm view pi-attention version          # 0.3.0
 - 改版本号：在对应子包的 `package.json` 修改 `version`（遵循 semver），提交并打 Git tag（`git tag <包名>@<版本>`）。
 - 发布：`npm publish -w <包名>`（从仓库根目录）。
 - 版本号与 Git tag 对齐。
+
+## 一键发布脚本
+
+`scripts/release.sh`：自动完成「提升版本 → 校验 tarball → 发布官方 registry → 提交+打 tag → 更新本地 pi 包 → 推送」：
+
+```bash
+./scripts/release.sh                 # 四个包全部 patch 提升并发布
+./scripts/release.sh minor           # 四个包全部 minor 提升并发布
+./scripts/release.sh pi-grill-all    # 只发布 pi-grill-all（patch）
+./scripts/release.sh pi-grill-all pi-attention major
+```
+
+前置：已登录 npm（`npm login --registry https://registry.npmjs.org`）且工作区干净。发布过程会交互输入 2FA OTP。示例用法（在仓库根目录执行）：
+
+```bash
+./scripts/release.sh
+```
