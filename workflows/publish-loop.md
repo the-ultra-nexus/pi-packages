@@ -68,7 +68,7 @@
 2. `npm pack --dry-run` 复核（防 version 改动引入差异）。
 3. `npm publish --registry https://registry.npmjs.org`（官方 registry；TTY 交互输入 2FA OTP；`~/.npmrc` 的 registry 若为镜像，用 `--registry` 覆盖）。
 4. `git tag <pkg>@<version>`（与版本号对齐）。
-5. **RELEASE.md 追加**（当前 `release.sh` 未覆盖，由本工作流补齐）：在 `## <YYYY-MM-DD>` 小节追加每包一行——`包名@版本 ｜ bump ｜ 一句话变更`；若有新的坑/注意点，追加到踩坑节。
+5. **RELEASE.md 追加**：`scripts/release.sh` 已自动追加（变更摘要 = 上一 tag 以来的提交记录）；若未走脚本，则按同格式手动追加——`## <date> — 发布` 小节，每包一行 `| 包 | 版本 | bump | 变更 |`。
 6. `pi update npm:<pkg>`（若本地按 npm 安装过）；本地为路径安装则跳过并注明。
 7. `git add` 包 `package.json` + `RELEASE.md` → `git commit -m "release(<pkg>): v<version>"`（每包一个，或合并）→ `git push origin main --tags`。
 
@@ -93,7 +93,7 @@ tag: <pkg>@<version>（已推送）
 
 ## 参考资产
 
-- 发布脚本：`scripts/release.sh`（第 7 步主体；RELEASE.md 追加待并入）
+- 发布脚本：`scripts/release.sh`（第 7 步主体，含 RELEASE.md 自动追加）
 - 发布记录：`RELEASE.md`（含首次发布与踩坑）
 - 安装说明：根 `README.md`
 - 审查：`skills/multi-code-review/SKILL.md`（第 4 步第 6 项）

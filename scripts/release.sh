@@ -69,9 +69,21 @@ if ! npm whoami --registry "$REGISTRY" >/dev/null 2>&1; then
 fi
 
 new_tags=()
+release_pkgs=()
+release_vers=()
+release_chgs=()
 for p in "${packages[@]}"; do
   dir="$(pkg_dir "$p")"
   echo ""
+  # 变更摘要：自上一 tag 以来该包的提交（用于 RELEASE.md）
+  prev_tag="$(git tag --list "${p}@*" --sort=-version:refname | head -1)"
+  if [[ -n "$prev_tag" ]]; then
+    changes="$(git log --oneline "$prev_tag..HEAD" -- "$dir" | sed 's/^/- /; s/|/\\|/g' | paste -sd'; ' -)"
+  else
+    changes="首次发布"
+  fi
+  [[ -n "$changes" ]] || changes="（无独立提交记录）"
+
   echo "==> [${p}] 提升版本（${bump}）"
   npm version "$bump" --no-git-tag-version -w "$p" >/dev/null
   version="$(node -p "require('./$dir/package.json').version")"
@@ -88,6 +100,7 @@ for p in "${packages[@]}"; do
   git commit -m "release($p): v$version" >/dev/null
   git tag "$p@$version"
   new_tags+=("$p@$version")
+  release_pkgs+=("$p"); release_vers+=("$version"); release_chgs+=("$changes")
 
   echo "==> [$p] 更新本地 pi 包"
   if pi update "npm:$p" >/dev/null 2>&1; then
@@ -96,6 +109,20 @@ for p in "${packages[@]}"; do
     echo "    提示：本地未按 npm 安装 ${p}，或更新失败；需要时手动执行 pi update npm:${p}"
   fi
 done
+
+# --- 追加 RELEASE.md 发布记录 ---
+if [[ "${#release_pkgs[@]}" -gt 0 ]]; then
+  echo ""
+  echo "==> 追加 RELEASE.md"
+  {
+    printf '\n## %s — 发布\n\n| 包 | 版本 | bump | 变更 |\n|---|---|---|---|\n' "$(date +%Y-%m-%d)"
+    for i in "${!release_pkgs[@]}"; do
+      printf '| %s | %s | %s | %s |\n' "${release_pkgs[$i]}" "${release_vers[$i]}" "$bump" "${release_chgs[$i]}"
+    done
+  } >> RELEASE.md
+  git add RELEASE.md
+  git commit -m "docs: update RELEASE.md" >/dev/null
+fi
 
 echo ""
 echo "==> 推送 main 与新 tag"
