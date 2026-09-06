@@ -1,7 +1,7 @@
 {
   "name": "pi-iterm2",
-  "version": "0.1.0",
-  "description": "Pi extension for iTerm2: show the latest user request in the tab title and notify on completion.",
+  "version": "0.2.0",
+  "description": "Pi extension for iTerm2/Orca: title shows the first user request, notify on completion, and alert when pi is waiting for your selection (permission dialogs, plan-mode menus).",
   "type": "module",
   "license": "MIT",
   "keywords": ["pi-package", "iterm2", "title", "notification", "macos"],

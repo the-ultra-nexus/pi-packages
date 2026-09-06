@@ -8,6 +8,9 @@ Pi 的 iTerm2 集成扩展：把 iTerm2 的标签页标题显示为**会话第�
 
 1. **标题恒定显示提问** — 标题显示本会话最开始的一次提问，跨 reload / resume 稳定，退出时还原。
 2. **回答完成系统通知** — 每次回答完成后，在 macOS 通知中心弹出通知，标题显示 assistant 回复摘要。
+3. **等待用户操作提醒** — 权限弹窗（pi-permission-system）、计划菜单（pi-plan-mode）等阻塞等待你选择时：
+   - **iTerm2**：弹系统通知 + dock 弹跳，终端标题变为「⏸ 等待选择…」；
+   - **Orca**：通过 agent-hook 协议上报 `ui_prompt_start` / `ui_prompt_end`，让 Orca 显示 waiting 状态。
 
 ## 安装
 
@@ -38,6 +41,7 @@ pi remove git:github.com/the-ultra-nexus/pi-iterm2   # 卸载（用你安装时�
 | 环境变量 | 默认 | 说明 |
 |----------|------|------|
 | `PI_ITERM2_NOTIFY` | 开 | 设为 `0` 关闭「回答完成通知」 |
+| `PI_ITERM2_NOTIFY_WAITING` | 开 | 设为 `0` 关闭「等待用户操作」的系统通知 |
 
 ### 通知机制（iTerm2 原生，无需第三方工具）
 
@@ -61,9 +65,18 @@ pi remove git:github.com/the-ultra-nexus/pi-iterm2   # 卸载（用你安装时�
 
 ## 事件/原理
 
-- `session_start` — 会话启动/加载/恢复时，设定标题为最开始提问
-- `agent_settled` — 回答完成（消息已落盘）时触发，发系统通知 + 校正标题
-- `session_shutdown` — 会话退出时还原标题
+- `request-title.ts` — 标题 + 回答完成通知
+  - `session_start` — 会话启动/加载/恢复时，设定标题为最开始提问
+  - `agent_settled` — 回答完成（消息已落盘）时触发，发系统通知 + 校正标题
+  - `session_shutdown` — 会话退出时还原标题
+- `waiting-notify.ts` — 等待用户操作提醒（权限弹窗 / 计划菜单 / 任意 `ctx.ui.*` 阻塞提示）
+  - `ui_prompt_start` — 等待开始：iTerm2 弹通知 + 标题切「⏸ 等待选择…」；Orca 上报 `ui_prompt_start` hook
+  - `ui_prompt_end` — 等待结束：iTerm2 恢复标题；Orca 上报 `ui_prompt_end` hook
+  - 环境判定：Orca pane（`ORCA_PANE_KEY`/`ORCA_AGENT_HOOK_ENDPOINT`）→ hook；
+    `TERM_PROGRAM === "iTerm.app"` 且非 `PI_WEB_HOSTNAME` → iTerm2 原生通知；否则静默
+
+> 为什么 waiting-notify 不放 Orca 的扩展里：Orca 会定期覆盖它自己分发的扩展
+> （文件头标 `@orca-managed-pi-extension` 的那些），补丁会被冲掉；放本包统一维护。
 
 ## License
 
