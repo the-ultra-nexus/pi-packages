@@ -8,9 +8,11 @@
  *   - 任何 ctx.ui.select / confirm / input / editor / custom 阻塞等用户的操作
  *
  * 行为（按宿主环境分流）：
- *   - Orca pane（ORCA_PANE_KEY / ORCA_AGENT_HOOK_ENDPOINT）：复用 orca agent-hook
- *     协议（POST http://127.0.0.1:PORT/hook/pi 或 /hook/omp），上报
- *     ui_prompt_start / ui_prompt_end，让 Orca 端能显示 waiting 状态。
+ *   - Orca pane（ORCA_PANE_KEY / ORCA_AGENT_HOOK_ENDPOINT）：上报 notification
+ *     事件（title/body/message/notification_type），Orca 走原生系统通知——来源为
+ *     Orca 应用，且只在 Orca 不在前台时弹出（前台静默，人离开窗口才提醒）。
+ *     ui_prompt_* 事件 Orca 不消费（白名单只有 ask_user_question /
+ *     request_user_input 的 tool_call），不再上报。
  *   - iTerm2（TERM_PROGRAM === "iTerm.app" 且非 pi-web）：弹出系统通知（OSC 9，
  *     发送者即 iTerm2）+ dock 弹跳一次（OSC 1337 RequestAttention=once），并把终端
  *     标题切换为「⏸ 等待选择…」，选择完成后恢复基础标题。
@@ -65,7 +67,8 @@ function isITerm2(): boolean {
  *  - TERM_PROGRAM === "iTerm.app"：只在真 iTerm2 里发 OSC（其它终端 OSC 无效）；
  *  - PI_WEB_HOSTNAME：排除 pi-web（pi-web 在 iTerm2 里跑时 TERM_PROGRAM 仍是
  *    iTerm.app，单查 TERM_PROGRAM 防不住它，参考 request-title.ts 的 b11c57d 提交）；
- *  - Orca pane 不会走到这里：isOrcaPane() 已在入口处分流到 hook 上报。
+ *  - Orca pane 不在这里处理：事件入口处按 isOrcaPane() 分流到 notifyViaSystem
+ *    （osascript 系统通知——Orca 终端不支持 OSC 9 / OSC 1337，实测会原样回显）。
  */
 function notifyWaiting(kind: string, title: string | undefined): void {
 	if (
@@ -74,8 +77,10 @@ function notifyWaiting(kind: string, title: string | undefined): void {
 		process.env.PI_WEB_HOSTNAME ||
 		!isITerm2()
 	) return;
+	// 标题 = 具体请求内容（与 request-title 的完成通知对称：那头是回复摘要）；
+	// 无具体标题时用默认句。正文 = 固定引导句。
 	const subject = clipped(
-		oneLine(title ? `pi 需要你确认：${title}` : "pi 正在等你做出选择/确认"),
+		oneLine(title ? title : "pi 正在等待你的输入"),
 	);
 	const body = "在 pi 窗口里完成操作";
 	try {
@@ -88,6 +93,30 @@ function notifyWaiting(kind: string, title: string | undefined): void {
 	const safeSubject = subject.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
 	const script = `osascript -e 'display notification "${body}" with title "${safeSubject}" sound name "Glass"'`;
 	exec(script, () => {});
+}
+
+/**
+ * Orca pane 环境下的等待提醒：上报 `notification` 事件给 Orca。
+ *
+ * 实测（2026-09，Orca app）：Orca 主进程对 hook 的 notification 事件（含
+ * title/body/message/notification_type）走 dispatchPlugin → Electron 原生系统
+ * 通知，**仅在 Orca 不在前台时弹出**（前台静默，符合「人离开窗口才提醒」的
+ * 预期）；来源为 Orca 应用本体，标题自动带 `${pluginId}: ` 前缀。
+ * `ui_prompt_*` 事件 Orca 不消费（白名单只有 ask_user_question /
+ * request_user_input 的 tool_call），所以这里不再上报它们，只报 notification。
+ */
+function notifyOrcaWaiting(ctx: ExtensionContext, title: string | undefined): void {
+	post(
+		"notification",
+		{
+			message: "Pi 正在等待你的操作",
+			title: clipped(oneLine(title ? title : "pi 正在等待你的输入")),
+			body: "在 pi 窗口里完成操作",
+			notification_type: "permission_prompt",
+			level: "info",
+		},
+		sessionMeta(ctx),
+	);
 }
 
 // ── Orca pane：agent-hook 上报 ──────────────────────────────────────────
@@ -245,25 +274,21 @@ export default function (pi: ExtensionAPI): void {
 	if (ownerPid && ownerPid !== selfPid) return;
 	process.env.ORCA_PI_STATUS_OWNED = selfPid;
 
-	// 等待用户输入开始：Orca 上报 ui_prompt_start；iTerm2 通知 + 标题切等待态。
+	// 等待用户输入开始：Orca 走系统通知兜底 + hook 上报；iTerm2 走 OSC 通知。
 	pi.on("ui_prompt_start", (event, ctx) => {
-		const kind = event.kind;
 		const title = event.title;
 		if (isOrcaPane()) {
-			post("ui_prompt_start", { kind, ...(title ? { title } : {}) }, sessionMeta(ctx));
+			// Orca 原生：notification 事件 → 系统通知（后台才弹，前台静默）
+			notifyOrcaWaiting(ctx, title);
 		} else {
-			notifyWaiting(kind, title);
-			ctx.ui?.setTitle(`⏸ 等待选择… · ${baseTitle(pi)}`);
+			notifyWaiting(event.kind, title);
 		}
+		ctx.ui?.setTitle(`⏸ 等待选择… · ${baseTitle(pi)}`);
 	});
 
-	// 等待结束：Orca 上报 ui_prompt_end；iTerm2 恢复基础标题
+	// 等待结束：恢复基础标题
 	// （request-title.ts 会在 agent_settled / session_start 再校正为「最早提问」）。
 	pi.on("ui_prompt_end", (event, ctx) => {
-		if (isOrcaPane()) {
-			post("ui_prompt_end", { kind: event.kind }, sessionMeta(ctx));
-		} else {
-			ctx.ui?.setTitle(baseTitle(pi));
-		}
+		ctx.ui?.setTitle(baseTitle(pi));
 	});
 }

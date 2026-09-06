@@ -1,6 +1,6 @@
 # pi-attention 🍎
 
-Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显示为**会话第一次 pi 提问**，**回答完成时弹 macOS 系统通知**，并在 **pi 等待你选择时提醒**（权限弹窗 / 计划菜单；iTerm2 原生转义序列与 Orca agent-hook，无需第三方工具）。
+Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显示为**会话第一次 pi 提问**，**回答完成时弹 macOS 系统通知**，并在 **pi 等待你选择时提醒**（权限弹窗 / 计划菜单；iTerm2 原生转义序列与 Orca notification 事件，无需第三方工具）。
 
 - **所属合集**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（在合集 `extensions/pi-attention/` 统一维护，随合集安装）
 
@@ -10,7 +10,7 @@ Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显�
 2. **回答完成系统通知** — 每次回答完成后，在 macOS 通知中心弹出通知，标题显示 assistant 回复摘要。
 3. **等待用户操作提醒** — 权限弹窗（pi-permission-system）、计划菜单（pi-plan-mode）等阻塞等待你选择时：
    - **iTerm2**：弹系统通知 + dock 弹跳，终端标题变为「⏸ 等待选择…」；
-   - **Orca**：通过 agent-hook 协议上报 `ui_prompt_start` / `ui_prompt_end`，让 Orca 显示 waiting 状态。
+   - **Orca**：上报 `notification` 事件，Orca 弹**原生系统通知**（来源为 Orca 应用）——**仅在 Orca 不在前台时弹出**（人离开窗口才提醒，前台静默不打扰）。
 
 ## 安装
 
@@ -49,6 +49,16 @@ pi remove git:github.com/the-ultra-nexus/pi-packages       # 卸载（用你安�
 
 无需安装 terminal-notifier 或 osascript。仅当不在 iTerm2 终端（如 tmux）时，才回退到 osascript 方式（并用显式提示音）。
 
+### 通知机制（Orca：notification 事件）
+
+Orca pane 下等待用户操作时，扩展经 agent-hook 上报 `notification` 事件
+（`title`/`body`/`message`/`notification_type`），Orca 主进程走原生系统通知：
+
+- 来源为 **Orca 应用本体**，标题自动带 `pi: ` 前缀；
+- **仅在 Orca 不在前台时弹出**——你正看着窗口时不打扰，切到别的应用时才提醒；
+- 相关调研见 `docs/orca-notification-mechanism.md`（`ui_prompt_*` 为何不被 Orca 消费、
+  `ask_user_question` 白名单等）。
+
 ## 标题行为
 
 - 标题**恒定显示本会话最开始的一次提问**（会话里第一条 user 消息），跨 reload / resume 稳定
@@ -67,9 +77,9 @@ pi remove git:github.com/the-ultra-nexus/pi-packages       # 卸载（用你安�
   - `agent_settled` — 回答完成（消息已落盘）时触发，发系统通知 + 校正标题
   - `session_shutdown` — 会话退出时还原标题
 - `waiting-notify.ts` — 等待用户操作提醒（权限弹窗 / 计划菜单 / 任意 `ctx.ui.*` 阻塞提示）
-  - `ui_prompt_start` — 等待开始：iTerm2 弹通知 + 标题切「⏸ 等待选择…」；Orca 上报 `ui_prompt_start` hook
-  - `ui_prompt_end` — 等待结束：iTerm2 恢复标题；Orca 上报 `ui_prompt_end` hook
-  - 环境判定：Orca pane（`ORCA_PANE_KEY`/`ORCA_AGENT_HOOK_ENDPOINT`）→ hook；
+  - `ui_prompt_start` — 等待开始：标题切「⏸ 等待选择…」；Orca 上报 `notification` 事件 → 原生系统通知（后台才弹）；iTerm2 弹 OSC 通知
+  - `ui_prompt_end` — 等待结束：恢复基础标题
+  - 环境判定：Orca pane（`ORCA_PANE_KEY`/`ORCA_AGENT_HOOK_ENDPOINT`）→ 上报 `notification` 事件；
     `TERM_PROGRAM === "iTerm.app"` 且非 `PI_WEB_HOSTNAME` → iTerm2 原生通知；否则静默
 
 > 为什么 waiting-notify 不放 Orca 的扩展里：Orca 会定期覆盖它自己分发的扩展
