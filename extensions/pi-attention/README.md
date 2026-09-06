@@ -2,7 +2,7 @@
 
 Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显示为**会话第一次 pi 提问**，**回答完成时弹 macOS 系统通知**，并在 **pi 等待你选择时提醒**（权限弹窗 / 计划菜单；iTerm2 原生转义序列与 Orca agent-hook，无需第三方工具）。
 
-- **所属合集**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（本扩展归档于 `extensions/pi-attention/`）
+- **所属合集**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（在合集 `extensions/pi-attention/` 统一维护，同步分发镜像仓库 [pi-attention](https://github.com/the-ultra-nexus/pi-attention)）
 
 ## 功能
 
@@ -14,14 +14,14 @@ Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显�
 
 ## 安装
 
-作为 pi 包安装（本扩展已并入 [pi-packages](https://github.com/the-ultra-nexus/pi-packages) 合集，独立仓库已归档）：
+作为 pi 包安装（本扩展在 [pi-packages](https://github.com/the-ultra-nexus/pi-packages) 合集统一维护，从镜像仓库分发）：
 
 ```bash
-# 本地路径安装（推荐，从合集安装）
-pi install ***REMOVED***pi-packages/extensions/pi-attention
+# 从 GitHub 安装（推荐）
+pi install git:github.com/the-ultra-nexus/pi-attention
 
 # 仅临时试用，不写入配置
-pi -e ***REMOVED***pi-packages/extensions/pi-attention
+pi -e git:github.com/the-ultra-nexus/pi-attention
 ```
 
 安装后**重启 pi，或在 pi 内执行 `/reload`** 即可生效。
@@ -30,7 +30,7 @@ pi -e ***REMOVED***pi-packages/extensions/pi-attention
 
 ```bash
 pi list                                            # 查看已安装的包
-pi remove <安装时使用的 source>                      # 卸载（用你安装时的 source）
+pi remove git:github.com/the-ultra-nexus/pi-attention     # 卸载（用你安装时的 source）
 ```
 
 ## 配置
