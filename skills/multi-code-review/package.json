@@ -1,19 +1,37 @@
 {
   "name": "pi-multi-code-review",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pi skill + subagent: three parallel code-review channels (OCR / Standards / Spec) reviewing the same diff bound under one scope, then an oracle deduplicates, resolves conflicts and re-grades them into a single adjudicated report (00-adjudication.md). Pure Pi workflowScript orchestration, no Orca required.",
   "license": "MIT",
-  "keywords": ["pi-package", "pi-skill", "code-review", "ocr", "standards", "spec", "oracle", "parallel-review"],
-  "files": ["SKILL.md", "README.md", "agents", "references"],
+  "keywords": [
+    "pi-package",
+    "pi-skill",
+    "code-review",
+    "ocr",
+    "standards",
+    "spec",
+    "oracle",
+    "parallel-review"
+  ],
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "agents",
+    "references"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/the-ultra-nexus/pi-packages.git"
   },
   "pi": {
-    "skills": ["./"]
+    "skills": [
+      "./"
+    ]
   },
   "pi-subagents": {
-    "agents": ["./agents"]
+    "agents": [
+      "./agents"
+    ]
   },
   "peerDependencies": {
     "pi-subagents": "*"
