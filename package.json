@@ -2,11 +2,20 @@
   "name": "pi-packages",
   "version": "1.0.0",
   "private": true,
-  "description": "pi 编码代理的包与资源合集：扩展随合集一键安装，技能独立分发。",
+  "description": "pi 编码代理包与资源的源码合集仓库：GitHub 承担源码与版本管理，每个 skill / extension 以独立 npm 包分发（pi-grill-all、pi-multi-research、pi-multi-code-review、pi-attention）。",
   "type": "module",
   "license": "MIT",
   "keywords": ["pi-package", "extensions", "skills"],
+  "workspaces": [
+    "skills/grill-all",
+    "skills/multi-research",
+    "skills/multi-code-review",
+    "extensions/pi-attention"
+  ],
   "pi": {
-    "extensions": ["./extensions/pi-attention/extensions"]
+    "extensions": [],
+    "skills": [],
+    "prompts": [],
+    "themes": []
   }
 }

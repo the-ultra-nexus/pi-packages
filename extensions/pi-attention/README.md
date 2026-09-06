@@ -2,7 +2,8 @@
 
 Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显示为**会话第一次 pi 提问**，**回答完成时弹 macOS 系统通知**，并在 **pi 等待你选择时提醒**（权限弹窗 / 计划菜单；iTerm2 原生转义序列与 Orca notification 事件，无需第三方工具）。
 
-- **所属合集**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（在合集 `extensions/pi-attention/` 统一维护，随合集安装）
+- **源码仓库**: [pi-packages](https://github.com/the-ultra-nexus/pi-packages)（GitHub monorepo 负责源码与文档）
+- **npm 包**: `pi-attention`（独立安装、升级和卸载）
 
 ## 功能
 
@@ -10,28 +11,25 @@ Pi 的 **iTerm2 / Orca 注意力集成扩展**：把 iTerm2 标签页标题显�
 2. **回答完成系统通知** — 每次回答完成后，在 macOS 通知中心弹出通知，标题显示 assistant 回复摘要。
 3. **等待用户操作提醒** — 权限弹窗（pi-permission-system）、计划菜单（pi-plan-mode）等阻塞等待你选择时：
    - **iTerm2**：弹系统通知 + dock 弹跳，终端标题变为「⏸ 等待选择…」；
-   - **Orca**：上报 `notification` 事件，Orca 弹**原生系统通知**（来源为 Orca 应用）——**仅在 Orca 不在前台时弹出**（人离开窗口才提醒，前台静默不打扰）。
+   - **Orca**：上报 `notification` 事件，Orca 弹**原生系统通知**（来源为 Orca 应用）——**仅在 Orca 不在前台时弹出**。
 
 ## 安装
 
-作为扩展随 [pi-packages](https://github.com/the-ultra-nexus/pi-packages) 合集安装（合集根 `package.json` 的 `pi.extensions` 已注册本扩展）：
-
 ```bash
-# 从 GitHub 安装合集（包含本扩展）（推荐）
-pi install git:github.com/the-ultra-nexus/pi-packages
+# 全局安装
+pi install npm:pi-attention
 
-# 仅临时试用，不写入配置
-pi -e git:github.com/the-ultra-nexus/pi-packages
+# 项目级安装
+pi install -l npm:pi-attention
+
+# 本地开发：在 pi-packages 仓库根目录执行
+pi install ./extensions/pi-attention
+
+# 卸载
+pi remove npm:pi-attention
 ```
 
-安装后**重启 pi，或在 pi 内执行 `/reload`** 即可生效。
-
-查看/卸载：
-
-```bash
-pi list                                            # 查看已安装的包
-pi remove git:github.com/the-ultra-nexus/pi-packages       # 卸载（用你安装时的 source）
-```
+安装后**重启 pi，或在 pi 内执行 `/reload`** 即可生效。GitHub monorepo 仅作为源码和文档中心，不再通过根目录合集安装本扩展。
 
 ## 配置
 
@@ -51,13 +49,11 @@ pi remove git:github.com/the-ultra-nexus/pi-packages       # 卸载（用你安�
 
 ### 通知机制（Orca：notification 事件）
 
-Orca pane 下等待用户操作时，扩展经 agent-hook 上报 `notification` 事件
-（`title`/`body`/`message`/`notification_type`），Orca 主进程走原生系统通知：
+Orca pane 下等待用户操作时，扩展经 agent-hook 上报 `notification` 事件（`title` / `body` / `message` / `notification_type`），Orca 主进程走原生系统通知：
 
 - 来源为 **Orca 应用本体**，标题自动带 `pi: ` 前缀；
 - **仅在 Orca 不在前台时弹出**——你正看着窗口时不打扰，切到别的应用时才提醒；
-- 相关调研见 `docs/orca-notification-mechanism.md`（`ui_prompt_*` 为何不被 Orca 消费、
-  `ask_user_question` 白名单等）。
+- 相关调研见 `docs/orca-notification-mechanism.md`（`ui_prompt_*` 为何不被 Orca 消费、`ask_user_question` 白名单等）。
 
 ## 标题行为
 
@@ -79,11 +75,9 @@ Orca pane 下等待用户操作时，扩展经 agent-hook 上报 `notification` 
 - `waiting-notify.ts` — 等待用户操作提醒（权限弹窗 / 计划菜单 / 任意 `ctx.ui.*` 阻塞提示）
   - `ui_prompt_start` — 等待开始：标题切「⏸ 等待选择…」；Orca 上报 `notification` 事件 → 原生系统通知（后台才弹）；iTerm2 弹 OSC 通知
   - `ui_prompt_end` — 等待结束：恢复基础标题
-  - 环境判定：Orca pane（`ORCA_PANE_KEY`/`ORCA_AGENT_HOOK_ENDPOINT`）→ 上报 `notification` 事件；
-    `TERM_PROGRAM === "iTerm.app"` 且非 `PI_WEB_HOSTNAME` → iTerm2 原生通知；否则静默
+  - 环境判定：Orca pane（`ORCA_PANE_KEY` / `ORCA_AGENT_HOOK_ENDPOINT`）→ 上报 `notification` 事件；`TERM_PROGRAM === "iTerm.app"` 且非 `PI_WEB_HOSTNAME` → iTerm2 原生通知；否则静默
 
-> 为什么 waiting-notify 不放 Orca 的扩展里：Orca 会定期覆盖它自己分发的扩展
-> （文件头标 `@orca-managed-pi-extension` 的那些），补丁会被冲掉；放本包统一维护。
+> 为什么 waiting-notify 不放 Orca 的扩展里：Orca 会定期覆盖它自己分发的扩展（文件头标 `@orca-managed-pi-extension` 的那些），补丁会被冲掉；放本包统一维护。
 
 ## License
 

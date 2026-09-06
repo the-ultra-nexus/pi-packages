@@ -1,6 +1,6 @@
 # multi-research
 
-多模型对照调研：派 **多个采用不同模型**的内置 `researcher` **并行调研同一个问题**，再由 `oracle`（GPT-5.6 Sol）交叉检验、合并成一份带对照、冲突标注、来源裁决与模型质量观察的中文分析报告。
+多模型对照调研：派 **多个采用不同模型**的内置 `researcher` **并行调研同一个问题**，再由 `oracle` 交叉检验、合并成一份带对照、冲突标注、来源裁决与模型质量观察的中文分析报告。
 
 ## 它解决什么问题
 
@@ -15,25 +15,25 @@
 
 **零自定义 agent**：模型通过调度时的 `model:` 参数传给内置 `researcher`（pi-subagents 自带）。唯一的配置点是 SKILL.md 里的**模型名单**——换/加模型只改那一处，没有 agents 文件、没有安装同步问题。
 
-## 目录结构
-
-```
-multi-research/
-├── SKILL.md        # 主流程：解析模型名单 → 并行调研 → oracle 评审 → 合并落盘
-└── README.md       # 本文件
-```
-
 ## 安装
 
-本技能依赖 pi-subagents（内置 `researcher` / `oracle`、并行调度 `workflowScript`），**无需安装任何自定义 agents**。
+本技能依赖 `pi-subagents`（提供内置 `researcher` / `oracle` 和 `workflowScript` 并行调度）：
 
 ```bash
-# 直接复制技能目录到 pi 技能路径即可（或使用 npx skills 抓取 SKILL.md 后同样放置）
-git clone https://github.com/the-ultra-nexus/pi-packages.git /tmp/pi-packages
-cp -r /tmp/pi-packages/skills/multi-research ~/.pi/agent/skills/
+# 前置依赖
+pi install npm:pi-subagents
+
+# 安装本技能
+pi install npm:pi-multi-research
+
+# 项目级安装
+pi install -l npm:pi-multi-research
+
+# 本地开发：在 pi-packages 仓库根目录执行
+pi install ./skills/multi-research
 ```
 
-若用 `npx skills add the-ultra-nexus/pi-packages/skills/multi-research --copy`：CLI 只负责 SKILL.md 且默认装到它自己支持的 agent 目录（pi 不在明确支持列表），装完把 SKILL.md 放到 `~/.pi/agent/skills/multi-research/SKILL.md` 即可。
+不再推荐从 GitHub 根仓库安装合集或复制目录；GitHub monorepo 仅用于源码和文档维护。本地路径安装适合开发和测试未发布版本。
 
 ## 使用
 
@@ -51,11 +51,20 @@ cp -r /tmp/pi-packages/skills/multi-research ~/.pi/agent/skills/
 
 产出：`docs/research/YYYY-MM-DD-<topic>/` 下每个模型一份简报 + 1 份 oracle 合并分析（`00-analysis.md`）。
 
+## 目录结构
+
+```text
+multi-research/
+├── package.json    # pi-multi-research：独立 npm 包 manifest
+├── SKILL.md        # 主流程：解析模型名单 → 并行调研 → oracle 评审 → 合并落盘
+└── README.md       # 本文件
+```
+
 ## 换模型 / 加模型
 
-改 SKILL.md 顶部的「模型名单」（或简写映射）列表即可，流程与安装都不动。模型必须存在于 pi 的模型注册表（`~/.pi/agent/models.json`）。
+改 SKILL.md 顶部的「模型名单」（或简写映射）列表即可，流程与安装都不动。模型必须存在于 pi 的模型注册表。
 
 ## 前提与成本
 
-- 默认名单走 B.AI / opencode 免费通道；`oracle` 走本地配置的 GPT relay（付费，`gpt-5.6-sol`）。预算敏感可在 `settings.json` 的 `agentOverrides` 换评审模型。
+- 默认名单走 B.AI / opencode 免费通道；`oracle` 使用当前 pi-subagents 配置的模型，具体费用取决于本地配置。
 - GLM 模型只接受 low/high/max 思考级别，名单里必须写 `bai/glm-5.3-flash:high`（medium 会 400）。

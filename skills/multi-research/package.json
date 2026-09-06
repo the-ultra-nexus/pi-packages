@@ -1,0 +1,18 @@
+{
+  "name": "pi-multi-research",
+  "version": "1.0.0",
+  "description": "Pi skill: multi-model cross-checked research — dispatch several researchers on different models in parallel for the same question, then an oracle cross-checks and merges them into one Chinese analysis report with comparison, conflicts, source adjudication, and model-quality observations.",
+  "license": "MIT",
+  "keywords": ["pi-package", "pi-skill", "research", "multi-model", "oracle", "cross-check"],
+  "files": ["SKILL.md", "README.md"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-ultra-nexus/pi-packages.git"
+  },
+  "pi": {
+    "skills": ["./"]
+  },
+  "peerDependencies": {
+    "pi-subagents": "*"
+  }
+}
