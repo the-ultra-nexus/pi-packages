@@ -6,12 +6,14 @@ GitHub 源码/文档中心：根目录是 **private monorepo**（4 个 npm works
 
 ## 包与目录
 
-| 包 | 目录 | 形态 |
-|---|---|---|
-| `pi-grill-all` | `skills/grill-all` | skill |
-| `pi-multi-research` | `skills/multi-research` | skill |
+
+| 包                      | 目录                         | 形态                                                                                     |
+| ---------------------- | -------------------------- | -------------------------------------------------------------------------------------- |
+| `pi-grill-all`         | `skills/grill-all`         | skill                                                                                  |
+| `pi-multi-research`    | `skills/multi-research`    | skill                                                                                  |
 | `pi-multi-code-review` | `skills/multi-code-review` | skill + subagent（`multi-code-review.review-runner`，manifest 分发键 `pi-subagents.agents`） |
-| `pi-attention` | `extensions/pi-attention` | extension |
+| `pi-attention`         | `extensions/pi-attention`  | extension                                                                              |
+
 
 发布边界 = 各包 `package.json` 的 `files` 白名单（含 README/SKILL/agents/references 约定项）；发布前用 `npm pack --dry-run` 对照白名单核对 tarball。
 
@@ -28,8 +30,9 @@ GitHub 源码/文档中心：根目录是 **private monorepo**（4 个 npm works
 
 ## 硬规则
 
-- **registry**：发布只走官方 `https://registry.npmjs.org`；本机 npm 可能配置镜像，发布命令显式带 `--registry`。
+- **registry**：发布只走官方 `https://registry.npmjs.org`。
 - **隔离验证**：安装/包 agent 发现类验证使用临时 `HOME`（`mktemp -d`，结束清理），全程不触碰真实用户配置。
 - **提交前自查**：对 staged diff 运行敏感扫描（用户主目录绝对路径、认证串/密钥类模式）；仓库文本只写相对路径与占位符（`<repo>`、`<pkg>`）。
 - **版本对齐**：semver；每次发布打 `git tag <包名>@<版本>`，与 `package.json` 版本一致。
 - **文档同步**：改动包能力/结构时同步更新该包 README 与根 `README.md` 的安装说明；新踩坑记入 `RELEASE.md`。
+
