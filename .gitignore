@@ -36,6 +36,3 @@ npm-debug.log*
 
 # 其他本地文件
 *.local
-
-# Pi 资源摸排快照（含本机资源文件地址，不纳入版本库）
-docs/pi-resources-inventory.md
