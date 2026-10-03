@@ -1,0 +1,30 @@
+{
+  "name": "pi-personal-rules",
+  "version": "0.1.0",
+  "description": "Pi extension that injects personal rules from ~/.pi/agent/PERSONAL.md at the tail of the <rules> section, with a runtime toggle (command, shortcut, CLI flag) and persisted state.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "extension",
+    "prompt",
+    "rules",
+    "personalization"
+  ],
+  "files": [
+    "README.md",
+    "extensions"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  }
+}

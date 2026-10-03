@@ -7,6 +7,7 @@
 | 路径 | npm 包 | 说明 |
 |---|---|---|
 | `pi-attention/` | `pi-attention` | iTerm2 / Orca 注意力集成：标题、完成通知和等待提醒 |
+| `pi-personal-rules/` | `pi-personal-rules` | 把 `~/.pi/agent/PERSONAL.md` 逐行注入 `<rules>` 末尾，带运行时开关与状态持久化 |
 
 ## 安装
 
@@ -14,12 +15,14 @@
 
 ```bash
 pi install npm:pi-attention
+pi install npm:pi-personal-rules
 ```
 
 开发仓库中的未发布版本：
 
 ```bash
 pi install ./extensions/pi-attention
+pi install ./extensions/pi-personal-rules
 ```
 
 项目级安装使用 `pi install -l`；卸载时使用安装时的对应 source。GitHub monorepo 仅作为源码与文档中心，不再推荐通过根目录一次性安装全部扩展。

@@ -2,7 +2,7 @@
 
 ## 项目形态
 
-GitHub 源码/文档中心：根目录是 **private monorepo**（4 个 npm workspace 子包），根 `pi` manifest 为空数组。使用者通过 `pi install npm:<包名>` 安装各独立包；**不要用 `pi install ./` 安装根目录**（只注册空 manifest）。
+GitHub 源码/文档中心：根目录是 **private monorepo**（5 个 npm workspace 子包），根 `pi` manifest 为空数组。使用者通过 `pi install npm:<包名>` 安装各独立包；**不要用 `pi install ./` 安装根目录**（只注册空 manifest）。
 
 ## 包与目录
 
@@ -13,6 +13,7 @@ GitHub 源码/文档中心：根目录是 **private monorepo**（4 个 npm works
 | `pi-multi-research`    | `skills/multi-research`    | skill                                                                                  |
 | `pi-multi-code-review` | `skills/multi-code-review` | skill + subagent（`multi-code-review.review-runner`，manifest 分发键 `pi-subagents.agents`） |
 | `pi-attention`         | `extensions/pi-attention`  | extension                                                                              |
+| `pi-personal-rules`    | `extensions/pi-personal-rules` | extension                                                                           |
 
 
 发布边界 = 各包 `package.json` 的 `files` 白名单（含 README/SKILL/agents/references 约定项）；发布前用 `npm pack --dry-run` 对照白名单核对 tarball。

@@ -10,6 +10,7 @@
 | `skills/multi-research/` | skill | `pi-multi-research` | 多模型并行调研同一问题，由 oracle 交叉检验并合并分析 |
 | `skills/multi-code-review/` | skill + subagent | `pi-multi-code-review` | OCR / Standards / Spec 三通道并行代码审查与 oracle 裁决 |
 | `extensions/pi-attention/` | extension | `pi-attention` | iTerm2 / Orca 注意力集成、完成通知和等待提醒 |
+| `extensions/pi-personal-rules/` | extension | `pi-personal-rules` | 把 `~/.pi/agent/PERSONAL.md` 注入 `<rules>` 末尾，可运行时开关 |
 
 ## 安装
 
@@ -21,6 +22,7 @@ pi install npm:pi-grill-all
 pi install npm:pi-multi-research
 pi install npm:pi-multi-code-review
 pi install npm:pi-attention
+pi install npm:pi-personal-rules
 
 # 项目级安装（写入当前项目的 .pi/settings.json）
 pi install -l npm:pi-grill-all
@@ -36,13 +38,14 @@ pi install ./skills/grill-all
 pi install ./skills/multi-research
 pi install ./skills/multi-code-review
 pi install ./extensions/pi-attention
+pi install ./extensions/pi-personal-rules
 ```
 
 GitHub monorepo 仅作为源码、文档、issue 和版本管理中心。需要贡献代码时 clone 仓库后，从对应子目录以本地路径安装；稳定使用时从 npm 安装目标独立包。
 
 ## 约定
 
-- 根 `package.json` 保持 `private: true`，并以 npm workspaces 管理四个独立子包；根 pi manifest 不注册任何资源，避免误装整套资源。
+- 根 `package.json` 保持 `private: true`，并以 npm workspaces 管理五个独立子包；根 pi manifest 不注册任何资源，避免误装整套资源。
 - 每个可分发子目录拥有自己的 `package.json`、版本号、README 和 pi manifest；包名与资源一一对应。
 - skill 包通过 `pi.skills: ["./"]` 注册自身根目录的 `SKILL.md`；extension 包只注册自身的 `./extensions`。
 - `pi-multi-code-review` 通过 `pi-subagents.agents: ["./agents"]` 自动发现其 `review-runner`，无需手工复制 agent 文件。
