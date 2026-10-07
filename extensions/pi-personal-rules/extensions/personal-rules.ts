@@ -6,17 +6,47 @@
  *
  * 常态显示：footer 显示 PR:ON(n) / PR:OFF
  * 开关：/personal-rules 命令、Ctrl+Shift+R 快捷键、--no-personal-rules 启动参数
- * 状态按会话持久化在自定义 session entry 里，重开会话保持。
+ * 状态全局持久化在 ~/.pi/agent/extensions/personal-rules.json，跨会话 / 跨项目 / 重启保持。
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { Key } from "@earendil-works/pi-tui";
 import { getAgentDir, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 const FILE_NAME = "PERSONAL.md";
-const STATE_TYPE = "personal-rules-state";
+const STATE_FILE = "personal-rules.json";
 const STATUS_KEY = "personal-rules";
+
+/** 全局状态文件：~/.pi/agent/extensions/personal-rules.json（所有会话 / 项目共享）。 */
+function stateFile(): string {
+	return join(getAgentDir(), "extensions", STATE_FILE);
+}
+
+/** 读取持久化开关；文件缺失或损坏时回退为默认开启。 */
+function readEnabled(): boolean {
+	const file = stateFile();
+	if (!existsSync(file)) return true;
+	try {
+		const parsed = JSON.parse(readFileSync(file, "utf-8")) as { enabled?: unknown };
+		return typeof parsed.enabled === "boolean" ? parsed.enabled : true;
+	} catch {
+		return true;
+	}
+}
+
+/** 原子写盘；失败不阻塞交互，下次切换再尝试。 */
+function writeEnabled(enabled: boolean): void {
+	const file = stateFile();
+	try {
+		mkdirSync(dirname(file), { recursive: true });
+		const tmp = `${file}.tmp`;
+		writeFileSync(tmp, `${JSON.stringify({ enabled }, null, 2)}\n`, "utf-8");
+		renameSync(tmp, file);
+	} catch {
+		// best effort
+	}
+}
 
 /** pi 内置的收尾两条规则，始终留在 <rules> 最后。 */
 const TAIL_RULES = ["Be concise in your responses", "Show file paths clearly when working with files"];
@@ -43,7 +73,7 @@ function mergeRules(builtin: readonly string[], personal: readonly string[]): st
 export default function personalRules(pi: ExtensionAPI) {
 	const file = join(getAgentDir(), FILE_NAME);
 
-	let enabled = true;
+	let enabled = readEnabled();
 
 	const personal = () => (enabled ? readLines(file) : []);
 
@@ -60,7 +90,7 @@ export default function personalRules(pi: ExtensionAPI) {
 
 	const toggle = (ctx: ExtensionContext) => {
 		enabled = !enabled;
-		pi.appendEntry(STATE_TYPE, { enabled });
+		writeEnabled(enabled);
 		refreshStatus(ctx);
 		ctx.ui.notify(
 			enabled
@@ -86,14 +116,9 @@ export default function personalRules(pi: ExtensionAPI) {
 		handler: (ctx) => toggle(ctx),
 	});
 
-	// 会话开始 / 重载：读持久化状态与 CLI flag，刷新 footer
+	// 会话开始 / 重载：从全局状态文件恢复，再让 CLI flag 覆盖本次运行（不写盘）
 	pi.on("session_start", (_event, ctx) => {
-		const persisted = ctx.sessionManager
-			.getEntries()
-			.filter((e: { type: string; customType?: string }) => e.type === "custom" && e.customType === STATE_TYPE)
-			.pop() as { data?: { enabled?: boolean } } | undefined;
-
-		enabled = persisted?.data?.enabled ?? true;
+		enabled = readEnabled();
 		if (pi.getFlag("no-personal-rules") === true) enabled = false;
 
 		refreshStatus(ctx);
